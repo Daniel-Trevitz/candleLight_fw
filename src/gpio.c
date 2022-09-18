@@ -35,6 +35,8 @@ void gpio_init(void)
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOF_CLK_ENABLE();
+
 #if defined(STM32F4)
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 #endif
@@ -48,6 +50,7 @@ void gpio_init(void)
 	HAL_GPIO_Init(CAN_S_GPIO_Port, &GPIO_InitStruct);
 #endif
 
+#ifdef LEDRX_Pin
 #if (LEDRX_Active_High == 1)
 	HAL_GPIO_WritePin(LEDRX_GPIO_Port, LEDRX_Pin, GPIO_PIN_RESET);
 #else
@@ -58,7 +61,9 @@ void gpio_init(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(LEDRX_GPIO_Port, &GPIO_InitStruct);
+#endif
 
+#ifdef LEDTX_Pin
 #if (LEDTX_Active_High == 1)
 	HAL_GPIO_WritePin(LEDTX_GPIO_Port, LEDTX_Pin, GPIO_PIN_RESET);
 #else
@@ -69,6 +74,7 @@ void gpio_init(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(LEDTX_GPIO_Port, &GPIO_InitStruct);
+#endif
 
 #if defined(BOARD_cannette)
 	HAL_GPIO_WritePin(nCANSTBY_Port, nCANSTBY_Pin, GPIO_PIN_RESET);
@@ -103,4 +109,90 @@ void gpio_init(void)
 	GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
 	HAL_GPIO_Init(USB_GPIO_Port, &GPIO_InitStruct);
 #endif
+
+#ifdef NEO_LED_Pin
+    // Controls the RGB neopixel
+#if (NEO_LED_Active_High == 1)
+    HAL_GPIO_WritePin(NEO_LED_GPIO_Port, NEO_LED_Pin, GPIO_PIN_RESET);
+#else
+    HAL_GPIO_WritePin(NEO_LED_GPIO_Port, NEO_LED_Pin, GPIO_PIN_SET);
+#endif
+    GPIO_InitStruct.Pin = NEO_LED_Pin;
+    GPIO_InitStruct.Mode = NEO_LED_Mode;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(NEO_LED_GPIO_Port, &GPIO_InitStruct);
+#endif
+
+#ifdef PIN_READY_Pin
+    // Signals to the next device that it should begin operation
+#if (PIN_READY_Active_High == 1)
+    HAL_GPIO_WritePin(PIN_READY_GPIO_Port, PIN_READY_Pin, GPIO_PIN_RESET);
+#else
+    HAL_GPIO_WritePin(PIN_READY_GPIO_Port, PIN_READY_Pin, GPIO_PIN_SET);
+#endif
+    GPIO_InitStruct.Pin = PIN_READY_Pin;
+    GPIO_InitStruct.Mode = PIN_READY_Mode;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(PIN_READY_GPIO_Port, &GPIO_InitStruct);
+#endif
+
+#ifdef PIN_DELAY_Pin
+    // Signals to this device that it should begin operation
+    GPIO_InitStruct.Pin = PIN_DELAY_Pin;
+    GPIO_InitStruct.Mode = PIN_DELAY_Mode;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(PIN_DELAY_GPIO_Port, &GPIO_InitStruct);
+#endif
+
+#ifdef PIN_TERM_Pin
+    // Signals to the next device that it should begin operation
+#if (PIN_TERM_Active_High == 1)
+    HAL_GPIO_WritePin(PIN_TERM_GPIO_Port, PIN_TERM_Pin, GPIO_PIN_RESET);
+#else
+    HAL_GPIO_WritePin(PIN_TERM_GPIO_Port, PIN_TERM_Pin, GPIO_PIN_SET);
+#endif
+    GPIO_InitStruct.Pin = PIN_TERM_Pin;
+    GPIO_InitStruct.Mode = PIN_TERM_Mode;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(PIN_TERM_GPIO_Port, &GPIO_InitStruct);
+#endif
+
+}
+
+static int term_state = 0;
+
+void set_term(int channel, int state)
+{
+    if (state)
+    {
+        term_state |= 1 << channel;
+    }
+    else
+    {
+        term_state &= ~(1 << channel);
+    }
+
+    // TODO add support for multiple channels
+#ifndef PIN_TERM_Pin
+    (void)state;
+#else
+#if (PIN_TERM_Active_High == 1)
+#	define TERM_ON  GPIO_PIN_SET
+#	define TERM_OFF GPIO_PIN_RESET
+#else
+#	define TERM_ON  GPIO_PIN_RESET
+#	define TERM_OFF GPIO_PIN_SET
+#endif
+
+    HAL_GPIO_WritePin(PIN_TERM_GPIO_Port, PIN_TERM_Pin, state ? TERM_ON : TERM_OFF);
+#endif
+}
+
+int is_term_on(unsigned int channel)
+{
+    return !!(term_state & (1 << channel));
 }

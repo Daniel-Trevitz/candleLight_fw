@@ -46,9 +46,21 @@ void SysTick_Handler(void)
 	HAL_SYSTICK_IRQHandler();
 }
 
-extern PCD_HandleTypeDef hpcd_USB_FS;
+void DMA1_Channel2_3_IRQHandler(void)
+{
+    extern DMA_HandleTypeDef hdma_tim3_ch3;
+    HAL_DMA_IRQHandler(&hdma_tim3_ch3);
+}
+
+void TIM3_IRQHandler(void)
+{
+    extern TIM_HandleTypeDef htim3;
+    HAL_TIM_IRQHandler(&htim3);
+}
+
 void USB_Handler(void)
 {
+    extern PCD_HandleTypeDef hpcd_USB_FS;
 	HAL_PCD_IRQHandler(&hpcd_USB_FS);
 }
 
@@ -93,13 +105,13 @@ const pFunc InterruptVectorTable[48] = {
     0, // int 7: EXTI4_15
     0, // int 8: TSC
     0, // int 9: DMA_CH1
-    0, // int 10: DMA_CH2_3
+    DMA1_Channel2_3_IRQHandler, // int 10: DMA_CH2_3
     0, // int 11: DMA_CH4_5_6_7
     0, // int 12: ADC_COMP
     0, // int 13: TIM1_BRK_UP_TRG_COM
     0, // int 14: TIM1_CC
     0, // int 15: TIM2
-    0, // int 16: TIM3
+    TIM3_IRQHandler, // int 16: TIM3
     0, // int 17: TIM6_DAC
     0, // int 18: TIM7
     0, // int 19: TIM14

@@ -206,6 +206,32 @@ THE SOFTWARE.
 	#define USB_Pin_DM		 GPIO_PIN_11
 	#define USB_Pin_DP		 GPIO_PIN_12
 
+#elif defined(BOARD_wmc_usb_can)
+    #define USBD_PRODUCT_STRING_FS	 (uint8_t*) "Dan's USB CAN Board"
+    #define USBD_MANUFACTURER_STRING (uint8_t*) "WMC"
+    #define DFU_INTERFACE_STRING_FS  (uint8_t*) "USB CAN firmware upgrade interface"
+
+    // Controls the RGB neopixel
+    #define NEO_LED_GPIO_Port     GPIOB
+    #define NEO_LED_Pin           GPIO_PIN_0
+    #define NEO_LED_Mode          GPIO_MODE_OUTPUT_PP
+    #define NEO_LED_Active_High   1
+
+    // Signals to the next device that it should begin operation
+    #define PIN_READY_GPIO_Port   GPIOB
+    #define PIN_READY_Pin         GPIO_PIN_1
+    #define PIN_READY_Mode        GPIO_MODE_OUTPUT_PP
+    #define PIN_READY_Active_High 1
+
+    // Signals to this device that it should begin operation
+    #define PIN_DELAY_GPIO_Port   GPIOB
+    #define PIN_DELAY_Pin         GPIO_PIN_2
+    #define PIN_DELAY_Mode        GPIO_MODE_INPUT
+
+    #define PIN_TERM_GPIO_Port    GPIOB
+    #define PIN_TERM_Pin          GPIO_PIN_3
+    #define PIN_TERM_Mode         GPIO_MODE_OUTPUT_PP
+    #define PIN_TERM_Active_High 1
 #else
 	#error please define BOARD
 #endif

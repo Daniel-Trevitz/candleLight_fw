@@ -25,23 +25,25 @@ THE SOFTWARE.
 */
 
 #include "led.h"
-#include <string.h>
+
 #include "hal_include.h"
+
+#include "config.h"
+#include "neo_pixel.h"
+
+#include <string.h>
 
 #define SEQ_ISPASSED(now, target) ((int32_t) ((now) - (target)) >= 0)
 
-void led_init(
-	led_data_t *leds,
-	void* led_rx_port, uint16_t led_rx_pin, bool led_rx_active_high,
-	void* led_tx_port, uint16_t led_tx_pin, bool led_tx_active_high
-) {
+void led_init(led_data_t *leds)
+{
 	memset(leds, 0, sizeof(led_data_t));
-	leds->led_state[led_rx].port = led_rx_port;
-	leds->led_state[led_rx].pin = led_rx_pin;
-	leds->led_state[led_rx].is_active_high = led_rx_active_high;
-	leds->led_state[led_tx].port = led_tx_port;
-	leds->led_state[led_tx].pin = led_tx_pin;
-	leds->led_state[led_tx].is_active_high = led_tx_active_high;
+    leds->led_state[led_rx].pin = 0;
+    leds->led_state[led_tx].pin = 1;
+    leds->led_state[led_st].pin = 2;
+    leds->led_state[led_st].is_active_high = true;
+    leds->led_state[led_tx].is_active_high = true;
+    leds->led_state[led_rx].is_active_high = true;
 }
 
 void led_set_mode(led_data_t *leds,led_mode_t mode)
@@ -56,7 +58,11 @@ static void led_set(led_state_t *led, bool state)
 		state = !state;
 	}
 
+    led->state = state;
+
+#ifndef NEO_LED_GPIO_Port
 	HAL_GPIO_WritePin(led->port, led->pin, state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+#endif
 }
 
 static uint32_t led_set_sequence_step(led_data_t *leds, uint32_t step_num)
@@ -65,6 +71,7 @@ static uint32_t led_set_sequence_step(led_data_t *leds, uint32_t step_num)
 	leds->sequence_step = step_num;
 	led_set(&leds->led_state[led_rx], step->state & 0x01);
 	led_set(&leds->led_state[led_tx], step->state & 0x02);
+    led_set(&leds->led_state[led_st], step->state & 0x04);
 	uint32_t delta = 10 * step->time_in_10ms;
 	if (delta > INT32_MAX) {
 		delta = INT32_MAX;	//clamp
@@ -142,11 +149,19 @@ void led_update(led_data_t *leds)
 		case led_mode_off:
 			led_set(&leds->led_state[led_rx], false);
 			led_set(&leds->led_state[led_tx], false);
+        led_set(&leds->led_state[led_st], false);
+        break;
+
+    case led_mode_boot:
+        led_set(&leds->led_state[led_rx], true);
+        led_set(&leds->led_state[led_tx], true);
+        led_set(&leds->led_state[led_st], true);
 			break;
 
 		case led_mode_normal:
 			led_update_normal_mode(&leds->led_state[led_rx]);
 			led_update_normal_mode(&leds->led_state[led_tx]);
+        led_set(&leds->led_state[led_st], false);
 			break;
 
 		case led_mode_sequence:
@@ -155,6 +170,11 @@ void led_update(led_data_t *leds)
 
 		default:
 			led_set(&leds->led_state[led_rx], false);
-			led_set(&leds->led_state[led_tx], true);
+        led_set(&leds->led_state[led_tx], false);
+        led_set(&leds->led_state[led_st], true);
 	}
+
+#ifndef NEO_LED_GPIO_Port
+    neo_pixel_render(leds);
+#endif
 }

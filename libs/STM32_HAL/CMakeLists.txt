@@ -37,6 +37,10 @@ set(STM32F0_SOURCES
     include/stm32f0xx/stm32f0xx_hal_tim.h
     src/stm32f0xx/stm32f0xx_hal_tim.c
 
+    include/stm32f0xx/stm32f0xx_hal_dma.h
+    include/stm32f0xx/stm32f0xx_hal_dma_ex.h
+    src/stm32f0xx/stm32f0xx_hal_dma.c
+
     include/stm32f0xx/stm32f0xx_ll_usb.h
     src/stm32f0xx/stm32f0xx_ll_usb.c
 

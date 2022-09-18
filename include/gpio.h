@@ -27,3 +27,6 @@ THE SOFTWARE.
 #pragma once
 
 void gpio_init(void);
+
+void set_term(unsigned int channel, int state);
+int is_term_on(unsigned int channel);

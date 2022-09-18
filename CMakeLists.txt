@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(candleLightFirmware C ASM)
+project(candleLightFirmware_v2 C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -62,6 +62,8 @@ set(
         include/queue.h src/queue.c
         include/timer.h src/timer.c
         include/util.h src/util.c
+
+        include/neo_pixel.h src/neo_pixel.c
 
         src/startup.c
         src/main.c
@@ -163,10 +165,10 @@ endfunction()
 
 ########## generate list of targets.
 # the "_fw" part is appended automatically
-set(TGT042_LIST "cantact" "canalyze" "canable" "usb2can" "cannette")
-set(TGT072_LIST "candleLight" "CANable_MKS")
-set(TGT407_LIST "STM32F4_DevBoard")
-
+#set(TGT042_LIST "cantact" "canalyze" "canable" "usb2can" "cannette")
+#set(TGT072_LIST "candleLight" "CANable_MKS")
+#set(TGT407_LIST "STM32F4_DevBoard")
+set(TGT072_LIST "wmc_usb_can")
 
 foreach (TGTNAME IN LISTS TGT042_LIST)
 	option(BUILD_${TGTNAME} "Build firmware for \"${TGTNAME}\" (default=yes)" ON)

@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <string.h>
 
 #include "config.h"
-#include "hal_include.h"
 #include "usbd_def.h"
 #include "usbd_desc.h"
 #include "usbd_core.h"
@@ -56,6 +55,75 @@ static queue_t *q_frame_pool = NULL;
 static queue_t *q_from_host = NULL;
 static queue_t *q_to_host = NULL;
 
+#ifdef PIN_DELAY_Pin
+// Wait for DELAY to go active.
+static void wait_for_the_go_signal(void)
+{
+    /*
+    int cnt = 0;
+    while(cnt < 10)
+    {
+        if(GPIO_PIN_SET == HAL_GPIO_ReadPin(PIN_DELAY_GPIO_Port, PIN_DELAY_Pin))
+        {
+            cnt++;
+        }
+        HAL_Delay(10);
+    }
+    */
+}
+#endif
+
+#ifdef PIN_READY_Pin
+static void send_ready_signal(void)
+{
+#if (PIN_READY_Active_High == 1)
+    HAL_GPIO_WritePin(PIN_READY_GPIO_Port, PIN_READY_Pin, GPIO_PIN_SET);
+#else
+    HAL_GPIO_WritePin(PIN_READY_GPIO_Port, PIN_READY_Pin, GPIO_PIN_RESET);
+#endif
+}
+
+static void pretty_delay(int time_ms)
+{
+    static const led_seq_step_t seq[] = {
+        { .state = 0x01, .time_in_10ms = 10 },
+        { .state = 0x02, .time_in_10ms = 10 },
+        { .state = 0x04, .time_in_10ms = 10 },
+        { .state = 0x00, .time_in_10ms = 0 }
+    };
+
+    int total = 0;
+    for(const led_seq_step_t *s = seq; s->time_in_10ms != 0; s++)
+    {
+        total += s->time_in_10ms;
+    }
+
+    int cycles = time_ms / total;
+
+    led_run_sequence(&hLED, seq, cycles);
+
+    while(hLED.sequence)
+    {
+        led_update(&hLED);
+        HAL_Delay(10);
+    }
+}
+#endif
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+    __HAL_RCC_DMA1_CLK_ENABLE();
+
+    HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
+
+//    HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
+//    HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
+}
+
 int main(void)
 {
 	uint32_t last_can_error_status = 0;
@@ -67,8 +135,13 @@ int main(void)
 
 	gpio_init();
 
-	led_init(&hLED, LEDRX_GPIO_Port, LEDRX_Pin, LEDRX_Active_High, LEDTX_GPIO_Port, LEDTX_Pin, LEDTX_Active_High);
+    MX_DMA_Init();
 
+    timer_init();
+
+    led_init(&hLED);
+
+#ifdef LEDRX_Pin
 	/* nice wake-up pattern */
 	for(uint8_t i=0; i<10; i++)
 	{
@@ -76,13 +149,16 @@ int main(void)
 		HAL_Delay(50);
 		HAL_GPIO_TogglePin(LEDTX_GPIO_Port, LEDTX_Pin);
 	}
-
-	led_set_mode(&hLED, led_mode_off);
-	timer_init();
+#endif
 
 	can_init(&hCAN, CAN_INTERFACE);
 	can_disable(&hCAN);
 
+#ifdef PIN_DELAY_Pin
+    led_set_mode(&hLED, led_mode_boot);
+    led_update(&hLED);
+    wait_for_the_go_signal();
+#endif
 
 	q_frame_pool = queue_create(CAN_QUEUE_SIZE);
 	q_from_host  = queue_create(CAN_QUEUE_SIZE);
@@ -102,11 +178,23 @@ int main(void)
 	USBD_GS_CAN_SetChannel(&hUSB, 0, &hCAN);
 	USBD_Start(&hUSB);
 
+#ifdef PIN_READY_Pin
+    // we need a long delay so virtualbox and windows enumerate consistently
+    pretty_delay(4000);
+    send_ready_signal();
+#endif
+
+    led_set_mode(&hLED, led_mode_off);
+    led_update(&hLED);
+
 #ifdef CAN_S_GPIO_Port
 	HAL_GPIO_WritePin(CAN_S_GPIO_Port, CAN_S_Pin, GPIO_PIN_RESET);
 #endif
 
-	while (1) {
+
+    while (1)
+    {
+        {
 		struct gs_host_frame *frame = queue_pop_front(q_from_host);
 		if (frame != 0) { // send can message from host
 			if (can_send(&hCAN, frame)) {
@@ -121,6 +209,7 @@ int main(void)
 				queue_push_front(q_from_host, frame); // retry later
 			}
 		}
+        }
 
 		if (USBD_GS_CAN_TxReady(&hUSB)) {
 			send_to_host();
@@ -177,6 +266,8 @@ int main(void)
 void HAL_MspInit(void)
 {
 	__HAL_RCC_SYSCFG_CLK_ENABLE();
+    __HAL_RCC_PWR_CLK_ENABLE();
+
 #if defined(STM32F4)
 	__HAL_RCC_PWR_CLK_ENABLE();
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
@@ -186,10 +277,40 @@ void HAL_MspInit(void)
 
 void SystemClock_Config(void)
 {
+#if BOARD_wmc_usb_can
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+    /** Initializes the RCC Oscillators according to the specified parameters
+    * in the RCC_OscInitTypeDef structure.
+    */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL2;
+    RCC_OscInitStruct.PLL.PREDIV = RCC_PREDIV_DIV1;
+    HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+    /** Initializes the CPU, AHB and APB buses clocks
+    */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1);
+
+
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_RTC;
+    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_HSE_DIV32;
+    PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
+    HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
+
+#elif defined(STM32F0)
 	RCC_OscInitTypeDef RCC_OscInitStruct;
 	RCC_ClkInitTypeDef RCC_ClkInitStruct;
-
-#if defined(STM32F0)
 	RCC_PeriphCLKInitTypeDef PeriphClkInit;
 	RCC_CRSInitTypeDef       RCC_CRSInitStruct;
 
@@ -219,6 +340,8 @@ void SystemClock_Config(void)
 	RCC_CRSInitStruct.HSI48CalibrationValue = 32;
 	HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
 #elif defined(STM32F4)
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
 	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
 	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;

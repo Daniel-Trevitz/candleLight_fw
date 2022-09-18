@@ -31,6 +31,7 @@ THE SOFTWARE.
 
 typedef enum {
 	led_mode_off,
+    led_mode_boot,
 	led_mode_normal,
 	led_mode_warn,
 	led_mode_error,
@@ -39,7 +40,8 @@ typedef enum {
 
 typedef enum {
 	led_rx = 0,	//will also index into array led_state[]
-	led_tx
+    led_tx,
+    led_st
 } led_num_t;
 
 typedef struct {
@@ -51,6 +53,7 @@ typedef struct {
 	void* port;
 	uint16_t pin;
 	bool is_active_high;
+    bool state;
 	uint32_t on_until;
 	uint32_t off_until;
 } led_state_t;
@@ -64,15 +67,11 @@ typedef struct {
 	uint32_t t_sequence_next;
 	int32_t seq_num_repeat;
 
-	led_state_t led_state[2];
+    led_state_t led_state[3];
 } led_data_t;
 
 
-void led_init(
-	led_data_t *leds,
-	void* led_rx_port, uint16_t led_rx_pin, bool led_rx_active_high,
-	void* led_tx_port, uint16_t led_tx_pin, bool led_tx_active_high
-);
+void led_init(led_data_t *leds);
 void led_set_mode(led_data_t *leds,led_mode_t mode);
 void led_run_sequence(led_data_t *leds, const led_seq_step_t *sequence, int32_t num_repeat);
 void led_indicate_trx(led_data_t *leds, led_num_t num);

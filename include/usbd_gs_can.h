@@ -45,7 +45,6 @@ THE SOFTWARE.
 
 extern USBD_ClassTypeDef USBD_GS_CAN;
 
-
 #if defined(STM32F0)
 # define USB_INTERFACE   USB
 # define USB_INTERRUPT   USB_IRQn

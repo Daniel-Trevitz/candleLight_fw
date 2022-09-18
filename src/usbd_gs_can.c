@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include "usbd_ioreq.h"
 #include "gs_usb.h"
 #include "can.h"
+#include "gpio.h"
 #include "timer.h"
 #include "flash.h"
 
@@ -272,7 +273,11 @@ static const struct gs_device_bt_const USBD_GS_CAN_btconst = {
 	| GS_CAN_FEATURE_HW_TIMESTAMP
 	| GS_CAN_FEATURE_IDENTIFY
 	| GS_CAN_FEATURE_USER_ID
-	| GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE,
+    | GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE
+#ifdef PIN_TERM_Pin
+    | GS_CAN_FEATURE_TERMINATION
+#endif
+    ,
 	CAN_CLOCK_SPEED, // can timing base clock
 	1, // tseg1 min
 	16, // tseg1 max
@@ -352,6 +357,7 @@ void USBD_GS_CAN_SetChannel(USBD_HandleTypeDef *pdev, uint8_t channel, can_data_
 static const led_seq_step_t led_identify_seq[] = {
 	{ .state = 0x01, .time_in_10ms = 10 },
 	{ .state = 0x02, .time_in_10ms = 10 },
+    { .state = 0x04, .time_in_10ms = 10 },
 	{ .state = 0x00, .time_in_10ms = 0 }
 };
 
@@ -360,7 +366,6 @@ static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
 	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
 
 	struct gs_device_bittiming *timing;
-	struct gs_device_mode *mode;
 	can_data_t *ch;
 	uint32_t param_u32;
 
@@ -383,6 +388,11 @@ static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
 			}
 			break;
 
+        case GS_USB_BREQ_SET_TERMINATION:
+            memcpy(&param_u32, hcan->ep0_buf, sizeof(param_u32));
+            set_term(req->wValue, param_u32);
+            break;
+
 		case GS_USB_BREQ_SET_USER_ID:
 			memcpy(&param_u32, hcan->ep0_buf, sizeof(param_u32));
 			if (flash_set_user_id(req->wValue, param_u32)) {
@@ -393,7 +403,7 @@ static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
 		case GS_USB_BREQ_MODE:
 			if (req->wValue < NUM_CAN_CHANNEL) {
 
-				mode = (struct gs_device_mode*)hcan->ep0_buf;
+                struct gs_device_mode *mode = (struct gs_device_mode*)hcan->ep0_buf;
 				ch = hcan->channels[req->wValue];
 
 				if (mode->mode == GS_CAN_MODE_RESET) {
@@ -477,9 +487,16 @@ static uint8_t USBD_GS_CAN_Config_Request(USBD_HandleTypeDef *pdev, USBD_SetupRe
 		case GS_USB_BREQ_BITTIMING:
 		case GS_USB_BREQ_IDENTIFY:
 		case GS_USB_BREQ_SET_USER_ID:
+        case GS_USB_BREQ_SET_TERMINATION:
 			hcan->last_setup_request = *req;
 			USBD_CtlPrepareRx(pdev, hcan->ep0_buf, req->wLength);
 			break;
+
+        case GS_USB_BREQ_GET_TERMINATION:
+            d32 = is_term_on(req->wValue);
+            memcpy(hcan->ep0_buf, &d32, sizeof(d32));
+            USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
+            break;
 
 		case GS_USB_BREQ_DEVICE_CONFIG:
 			memcpy(hcan->ep0_buf, &USBD_GS_CAN_dconf, sizeof(USBD_GS_CAN_dconf));
