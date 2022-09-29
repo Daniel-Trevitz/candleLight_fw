@@ -46,7 +46,7 @@ void led_init(led_data_t *leds)
     leds->led_state[led_rx].is_active_high = true;
 }
 
-void led_set_mode(led_data_t *leds,led_mode_t mode)
+void led_set_mode(led_data_t *leds, led_mode_t mode)
 {
 	leds->mode = mode;
 	led_update(leds);
@@ -146,35 +146,30 @@ void led_update(led_data_t *leds)
 {
 	switch (leds->mode) {
 
-		case led_mode_off:
-			led_set(&leds->led_state[led_rx], false);
-			led_set(&leds->led_state[led_tx], false);
-        led_set(&leds->led_state[led_st], false);
-        break;
+        case led_mode_off:
+            led_set(&leds->led_state[led_rx], false);
+            led_set(&leds->led_state[led_tx], false);
+            led_set(&leds->led_state[led_st], true);
+            break;
 
-    case led_mode_boot:
-        led_set(&leds->led_state[led_rx], true);
-        led_set(&leds->led_state[led_tx], true);
-        led_set(&leds->led_state[led_st], true);
-			break;
+        case led_mode_boot:
+            led_set(&leds->led_state[led_rx], true);
+            led_set(&leds->led_state[led_tx], true);
+            led_set(&leds->led_state[led_st], true);
+            break;
 
-		case led_mode_normal:
-			led_update_normal_mode(&leds->led_state[led_rx]);
-			led_update_normal_mode(&leds->led_state[led_tx]);
-        led_set(&leds->led_state[led_st], false);
-			break;
+        case led_mode_normal:
+            led_update_normal_mode(&leds->led_state[led_rx]);
+            led_update_normal_mode(&leds->led_state[led_tx]);
+            led_set(&leds->led_state[led_st], false);
+            break;
 
-		case led_mode_sequence:
-			led_update_sequence(leds);
-			break;
+        case led_mode_sequence:
+            led_update_sequence(leds);
+            break;
+    }
 
-		default:
-			led_set(&leds->led_state[led_rx], false);
-        led_set(&leds->led_state[led_tx], false);
-        led_set(&leds->led_state[led_st], true);
-	}
-
-#ifndef NEO_LED_GPIO_Port
-    neo_pixel_render(leds);
+#ifdef NEO_LED_GPIO_Port
+	neo_pixel_render(leds);
 #endif
 }

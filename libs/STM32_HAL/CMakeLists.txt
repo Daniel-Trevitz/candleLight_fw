@@ -22,11 +22,6 @@ set(STM32F0_SOURCES
     include/stm32f0xx/stm32f0xx_hal_gpio.h
     src/stm32f0xx/stm32f0xx_hal_gpio.c
 
-    include/stm32f0xx/stm32f0xx_hal_pcd_ex.h
-    src/stm32f0xx/stm32f0xx_hal_pcd_ex.c
-    include/stm32f0xx/stm32f0xx_hal_pcd.h
-    src/stm32f0xx/stm32f0xx_hal_pcd.c
-
     include/stm32f0xx/stm32f0xx_hal_rcc.h
     src/stm32f0xx/stm32f0xx_hal_rcc.c
     include/stm32f0xx/stm32f0xx_hal_rcc_ex.h
@@ -40,9 +35,6 @@ set(STM32F0_SOURCES
     include/stm32f0xx/stm32f0xx_hal_dma.h
     include/stm32f0xx/stm32f0xx_hal_dma_ex.h
     src/stm32f0xx/stm32f0xx_hal_dma.c
-
-    include/stm32f0xx/stm32f0xx_ll_usb.h
-    src/stm32f0xx/stm32f0xx_ll_usb.c
 
     src/cmsis/system_stm32f0xx.c
     include/stm32f0xx/Legacy/stm32_hal_legacy.h
@@ -81,11 +73,6 @@ set(STM32F4_SOURCES
     include/stm32f4xx/stm32f4xx_hal_gpio.h
     src/stm32f4xx/stm32f4xx_hal_gpio.c
 
-    include/stm32f4xx/stm32f4xx_hal_pcd_ex.h
-    src/stm32f4xx/stm32f4xx_hal_pcd_ex.c
-    include/stm32f4xx/stm32f4xx_hal_pcd.h
-    src/stm32f4xx/stm32f4xx_hal_pcd.c
-
     include/stm32f4xx/stm32f4xx_hal_rcc.h
     src/stm32f4xx/stm32f4xx_hal_rcc.c
     include/stm32f4xx/stm32f4xx_hal_rcc_ex.h
@@ -101,8 +88,9 @@ set(STM32F4_SOURCES
     include/stm32f4xx/stm32f4xx_hal_tim.h
     src/stm32f4xx/stm32f4xx_hal_tim.c
 
-    include/stm32f4xx/stm32f4xx_ll_usb.h
-    src/stm32f4xx/stm32f4xx_ll_usb.c
+    include/stm32f4xx/stm32f4xx_hal_dma.h
+    include/stm32f4xx/stm32f4xx_hal_dma_ex.h
+    src/stm32f4xx/stm32f4xx_hal_dma.c
 
     src/cmsis/system_stm32f4xx.c
     include/stm32f4xx/Legacy/stm32_hal_legacy.h

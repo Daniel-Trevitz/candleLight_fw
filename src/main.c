@@ -25,13 +25,13 @@ THE SOFTWARE.
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "config.h"
-#include "usbd_def.h"
-#include "usbd_desc.h"
-#include "usbd_core.h"
-#include "usbd_gs_can.h"
+#include "neo_pixel.h"
+
 #include "gpio.h"
 #include "queue.h"
 #include "gs_usb.h"
@@ -42,24 +42,28 @@ THE SOFTWARE.
 #include "flash.h"
 #include "util.h"
 
+#include "class/cdc/cdc_device.h"
+#include "tusb_config.h"
+#include "device/usbd.h"
+
+void gs_usb_task(void);
 void HAL_MspInit(void);
 static void SystemClock_Config(void);
-static bool send_to_host_or_enqueue(struct gs_host_frame *frame);
-static void send_to_host(void);
+//static bool send_to_host_or_enqueue(struct gs_host_frame *frame);
+//static void send_to_host(void);
+static int run = 1;
 
-static can_data_t hCAN = {0};
-static USBD_HandleTypeDef hUSB = {0};
-static led_data_t hLED = {0};
+can_data_t hCAN = {0};
+led_data_t hLED = {0};
 
-static queue_t *q_frame_pool = NULL;
-static queue_t *q_from_host = NULL;
-static queue_t *q_to_host = NULL;
+queue_t *q_frame_pool = NULL;
+queue_t *q_from_host = NULL;
+queue_t *q_to_host = NULL;
 
 #ifdef PIN_DELAY_Pin
 // Wait for DELAY to go active.
 static void wait_for_the_go_signal(void)
 {
-    /*
     int cnt = 0;
     while(cnt < 10)
     {
@@ -69,7 +73,6 @@ static void wait_for_the_go_signal(void)
         }
         HAL_Delay(10);
     }
-    */
 }
 #endif
 
@@ -82,32 +85,6 @@ static void send_ready_signal(void)
     HAL_GPIO_WritePin(PIN_READY_GPIO_Port, PIN_READY_Pin, GPIO_PIN_RESET);
 #endif
 }
-
-static void pretty_delay(int time_ms)
-{
-    static const led_seq_step_t seq[] = {
-        { .state = 0x01, .time_in_10ms = 10 },
-        { .state = 0x02, .time_in_10ms = 10 },
-        { .state = 0x04, .time_in_10ms = 10 },
-        { .state = 0x00, .time_in_10ms = 0 }
-    };
-
-    int total = 0;
-    for(const led_seq_step_t *s = seq; s->time_in_10ms != 0; s++)
-    {
-        total += s->time_in_10ms;
-    }
-
-    int cycles = time_ms / total;
-
-    led_run_sequence(&hLED, seq, cycles);
-
-    while(hLED.sequence)
-    {
-        led_update(&hLED);
-        HAL_Delay(10);
-    }
-}
 #endif
 
 /**
@@ -115,19 +92,23 @@ static void pretty_delay(int time_ms)
   */
 static void MX_DMA_Init(void)
 {
-    __HAL_RCC_DMA1_CLK_ENABLE();
+	__HAL_RCC_DMA1_CLK_ENABLE();
 
-    HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
+#ifdef STM32F4
+	// just shutup compiler, this is not tested
+#else
+	HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
+#endif
 
 //    HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
 //    HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
 }
 
+static void cdc_task(void);
+
 int main(void)
 {
-	uint32_t last_can_error_status = 0;
-
 	HAL_Init();
 	SystemClock_Config();
 
@@ -135,9 +116,13 @@ int main(void)
 
 	gpio_init();
 
-    MX_DMA_Init();
+	MX_DMA_Init();
 
     timer_init();
+
+#ifdef NEO_LED_Pin
+	neo_pixel_init();
+#endif
 
     led_init(&hLED);
 
@@ -172,15 +157,12 @@ int main(void)
 		queue_push_back(q_frame_pool, &msgbuf[i]);
 	}
 
-	USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
-	USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
-	USBD_GS_CAN_Init(&hUSB, q_frame_pool, q_from_host, &hLED);
-	USBD_GS_CAN_SetChannel(&hUSB, 0, &hCAN);
-	USBD_Start(&hUSB);
+	// init device stack on configured roothub port
+	tud_init(BOARD_TUD_RHPORT);
 
 #ifdef PIN_READY_Pin
     // we need a long delay so virtualbox and windows enumerate consistently
-    pretty_delay(4000);
+	pretty_delay(&hLED, 4000);
     send_ready_signal();
 #endif
 
@@ -191,75 +173,83 @@ int main(void)
 	HAL_GPIO_WritePin(CAN_S_GPIO_Port, CAN_S_Pin, GPIO_PIN_RESET);
 #endif
 
+	while(run) {
+		tud_task();
+		cdc_task();
+		gs_usb_task();
+	}
 
-    while (1)
-    {
-        {
-		struct gs_host_frame *frame = queue_pop_front(q_from_host);
-		if (frame != 0) { // send can message from host
-			if (can_send(&hCAN, frame)) {
-				// Echo sent frame back to host
-				frame->flags = 0x0;
-				frame->reserved = 0x0;
-				frame->timestamp_us = timer_get();
-				send_to_host_or_enqueue(frame);
+	dfu_run_bootloader();
+	return 0;
+}
 
-				led_indicate_trx(&hLED, led_tx);
-			} else {
-				queue_push_front(q_from_host, frame); // retry later
-			}
-		}
-        }
+static char buf[1024];
+static int bufUsed;
+int block = 0;
 
-		if (USBD_GS_CAN_TxReady(&hUSB)) {
-			send_to_host();
-		}
+int _write(int file, char *data, int len)
+{
+	if ((file != 1) && (file != 2) && (file != 3)) {
+	  return -1;
+	}
 
-		if (can_is_rx_pending(&hCAN)) {
-			struct gs_host_frame *frame = queue_pop_front(q_frame_pool);
-			if (frame != 0)
+	if (block)
+		return -1;
+
+	if (bufUsed + len >= 1024)
+		return -1;
+
+	memcpy(buf+bufUsed, data, len);
+	bufUsed += len;
+	buf[bufUsed] = 0;
+	return 0;
+}
+
+//--------------------------------------------------------------------+
+// USB CDC
+//--------------------------------------------------------------------+
+static void cdc_task(void)
+{
+	static bool started = false;
+	// connected() check for DTR bit
+	// Most but not all terminal client set this when making connection
+	// if ( tud_cdc_n_connected(0) )
+	{
+	  if ( tud_cdc_n_available(0) )
+	  {
+		  started = true;
+
+		  char rxbuf[64];
+		  uint32_t bytes = tud_cdc_n_read(0, rxbuf, sizeof(rxbuf));
+		  if(rxbuf[0] == 'q')
+			  run = 0;
+		  tud_cdc_n_write(0, rxbuf, bytes);
+		  tud_cdc_n_write_flush(0);
+	  }
+	}
+
+	if (started)
+	{
+		block = 1;
+
+		if (bufUsed)
+		{
+			char *s = buf;
+			while(bufUsed > 64)
 			{
-				if (can_receive(&hCAN, frame)) {
-
-					frame->timestamp_us = timer_get();
-					frame->echo_id = 0xFFFFFFFF; // not a echo frame
-					frame->channel = 0;
-					frame->flags = 0;
-					frame->reserved = 0;
-
-					send_to_host_or_enqueue(frame);
-
-					led_indicate_trx(&hLED, led_rx);
-				}
-				else
-				{
-					queue_push_back(q_frame_pool, frame);
-				}
+				tud_cdc_n_write(0, s, 64);
+				tud_cdc_n_write_flush(0);
+				s += 64;
+				bufUsed -= 64;
 			}
-			// If there are frames to receive, don't report any error frames. The
-			// best we can localize the errors to is "after the last successfully
-			// received frame", so wait until we get there. LEC will hold some error
-			// to report even if multiple pass by.
-		} else {
-			uint32_t can_err = can_get_error_status(&hCAN);
-			struct gs_host_frame *frame = queue_pop_front(q_frame_pool);
-			if (frame != 0) {
-				frame->timestamp_us = timer_get();
-				if (can_parse_error_status(can_err, last_can_error_status, &hCAN, frame)) {
-					send_to_host_or_enqueue(frame);
-					last_can_error_status = can_err;
-				} else {
-					queue_push_back(q_frame_pool, frame);
-				}
-			}
+			tud_cdc_n_write(0, s, bufUsed);
+			tud_cdc_n_write_flush(0);
+			bufUsed = 0;
 		}
 
-		led_update(&hLED);
+		tud_cdc_n_write_flush(0);
 
-		if (USBD_GS_CAN_DfuDetachRequested(&hUSB)) {
-			dfu_run_bootloader();
-		}
-
+		block = 0;
 	}
 }
 
@@ -369,24 +359,4 @@ void SystemClock_Config(void)
 
 	/* SysTick_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-}
-
-bool send_to_host_or_enqueue(struct gs_host_frame *frame)
-{
-	queue_push_back(q_to_host, frame);
-	return true;
-}
-
-void send_to_host(void)
-{
-	struct gs_host_frame *frame = queue_pop_front(q_to_host);
-
-	if(!frame)
-		return;
-
-	if (USBD_GS_CAN_SendFrame(&hUSB, frame) == USBD_OK) {
-		queue_push_back(q_frame_pool, frame);
-	} else {
-		queue_push_front(q_to_host, frame);
-	}
 }

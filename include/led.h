@@ -33,9 +33,7 @@ typedef enum {
 	led_mode_off,
     led_mode_boot,
 	led_mode_normal,
-	led_mode_warn,
-	led_mode_error,
-	led_mode_sequence
+    led_mode_sequence
 } led_mode_t;
 
 typedef enum {

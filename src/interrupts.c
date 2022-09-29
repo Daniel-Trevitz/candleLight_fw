@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <stdint.h>
 #include <stddef.h>
+#include "device/usbd.h"
 #include "hal_include.h"
 
 void NMI_Handler(void)
@@ -60,8 +61,9 @@ void TIM3_IRQHandler(void)
 
 void USB_Handler(void)
 {
-    extern PCD_HandleTypeDef hpcd_USB_FS;
-	HAL_PCD_IRQHandler(&hpcd_USB_FS);
+//    extern PCD_HandleTypeDef hpcd_USB_FS;
+//	HAL_PCD_IRQHandler(&hpcd_USB_FS);
+	tud_int_handler(0);
 }
 
 void Default_Handler(void)

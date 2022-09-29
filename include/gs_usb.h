@@ -25,8 +25,9 @@ THE SOFTWARE.
 */
 
 #pragma once
-
 #include <stdint.h>
+#include <stm32f0xx_hal_def.h>
+
 #define u32 uint32_t
 #define u8 uint8_t
 
@@ -165,8 +166,8 @@ enum gs_usb_breq {
 	GS_USB_BREQ_SET_USER_ID,
 	GS_USB_BREQ_DATA_BITTIMING,
 	GS_USB_BREQ_BT_CONST_EXT,
-    GS_USB_BREQ_SET_TERMINATION,
-    GS_USB_BREQ_GET_TERMINATION,
+	GS_USB_BREQ_SET_TERMINATION,
+	GS_USB_BREQ_GET_TERMINATION
 };
 
 enum gs_can_mode {
@@ -288,3 +289,30 @@ struct gs_tx_context {
 	struct gs_can *dev;
 	unsigned int echo_id;
 };
+
+/* Define these here so they can be referenced in other files */
+
+#define CAN_DATA_MAX_PACKET_SIZE   32  /* Endpoint IN & OUT Packet size */
+#define CAN_CMD_PACKET_SIZE        64  /* Control Endpoint Packet size */
+#define USB_CAN_CONFIG_DESC_SIZ    50
+#define NUM_CAN_CHANNEL             1
+#define USBD_GS_CAN_VENDOR_CODE  0x20
+#define DFU_INTERFACE_NUM           1
+#define DFU_INTERFACE_STR_INDEX  0xE0
+
+#if defined(STM32F0)
+# define USB_INTERFACE   USB
+# define USB_INTERRUPT   USB_IRQn
+# define CAN_INTERFACE   CAN
+# define CAN_CLOCK_SPEED 48000000
+#elif defined(STM32F4)
+# define USB_INTERFACE   USB_OTG_FS
+# define USB_INTERRUPT   OTG_FS_IRQn
+# define CAN_INTERFACE   CAN1
+# define CAN_CLOCK_SPEED 42000000
+
+// RX FIFO is defined in words, so divide bytes by 4
+// RX FIFO size chosen according to reference manual RM0368 which suggests
+// using (largest packet size / 4) + 1
+# define USB_RX_FIFO_SIZE ((256U / 4U) + 1U)
+#endif

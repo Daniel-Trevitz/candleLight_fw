@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include "config.h"
+#include "gpio.h"
 #include "hal_include.h"
 
 // must run before can_init
@@ -40,6 +41,7 @@ void gpio_init(void)
 #if defined(STM32F4)
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 #endif
+	__HAL_RCC_USB_CLK_ENABLE();
 
 #ifdef CAN_S_Pin
 	HAL_GPIO_WritePin(CAN_S_GPIO_Port, CAN_S_Pin, GPIO_PIN_SET);
@@ -163,23 +165,18 @@ void gpio_init(void)
 
 }
 
+#ifdef PIN_TERM_Pin
 static int term_state = 0;
 
-void set_term(int channel, int state)
+enum terminator_status set_term(unsigned int channel, enum terminator_status state)
 {
-    if (state)
-    {
+    // TODO add support for multiple channels
+    if (state == term_active) {
         term_state |= 1 << channel;
-    }
-    else
-    {
+    } else {
         term_state &= ~(1 << channel);
     }
 
-    // TODO add support for multiple channels
-#ifndef PIN_TERM_Pin
-    (void)state;
-#else
 #if (PIN_TERM_Active_High == 1)
 #	define TERM_ON  GPIO_PIN_SET
 #	define TERM_OFF GPIO_PIN_RESET
@@ -189,10 +186,28 @@ void set_term(int channel, int state)
 #endif
 
     HAL_GPIO_WritePin(PIN_TERM_GPIO_Port, PIN_TERM_Pin, state ? TERM_ON : TERM_OFF);
-#endif
+
+    return state;
 }
 
-int is_term_on(unsigned int channel)
+enum terminator_status get_term(unsigned int channel)
 {
     return !!(term_state & (1 << channel));
 }
+
+#else
+
+enum terminator_status set_term(unsigned int channel, enum terminator_status state)
+{
+    (void)state;
+    (void)channel;
+    return term_unsupported;
+}
+
+enum terminator_status get_term(unsigned int channel)
+{
+    (void)channel;
+    return term_unsupported;
+}
+
+#endif

@@ -28,5 +28,13 @@ THE SOFTWARE.
 
 void gpio_init(void);
 
-void set_term(unsigned int channel, int state);
-int is_term_on(unsigned int channel);
+
+enum terminator_status {
+	term_unsupported = -1,
+	term_inactive,
+	term_active
+};
+
+enum terminator_status set_term(unsigned int channel, enum terminator_status state);
+
+enum terminator_status get_term(unsigned int channel);

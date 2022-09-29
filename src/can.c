@@ -33,6 +33,8 @@ THE SOFTWARE.
 #define CAN1 CAN
 #endif
 
+#define CAN_ERRCOUNT_THRESHOLD 15	/* send an error frame if tx/rx counters increase by more than this amount */
+
 // Completely reset the CAN pheriperal, including bus-state and error counters
 static void rcc_reset(CAN_TypeDef *instance)
 {

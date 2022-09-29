@@ -206,17 +206,18 @@ THE SOFTWARE.
 	#define USB_Pin_DM		 GPIO_PIN_11
 	#define USB_Pin_DP		 GPIO_PIN_12
 
-#elif defined(BOARD_wmc_usb_can)
+#elif defined(BOARD_wmc_usb_can) || defined(BOARD_wmc_usb_can_standalone)
     #define USBD_PRODUCT_STRING_FS	 (uint8_t*) "Dan's USB CAN Board"
     #define USBD_MANUFACTURER_STRING (uint8_t*) "WMC"
     #define DFU_INTERFACE_STRING_FS  (uint8_t*) "USB CAN firmware upgrade interface"
 
     // Controls the RGB neopixel
-    #define NEO_LED_GPIO_Port     GPIOB
-    #define NEO_LED_Pin           GPIO_PIN_0
-    #define NEO_LED_Mode          GPIO_MODE_OUTPUT_PP
-    #define NEO_LED_Active_High   1
+	#define NEO_LED_GPIO_Port     GPIOB
+	#define NEO_LED_Pin           GPIO_PIN_0
+	#define NEO_LED_Mode          GPIO_MODE_OUTPUT_PP
+	#define NEO_LED_Active_High   1
 
+#ifndef BOARD_wmc_usb_can_standalone
     // Signals to the next device that it should begin operation
     #define PIN_READY_GPIO_Port   GPIOB
     #define PIN_READY_Pin         GPIO_PIN_1
@@ -227,6 +228,7 @@ THE SOFTWARE.
     #define PIN_DELAY_GPIO_Port   GPIOB
     #define PIN_DELAY_Pin         GPIO_PIN_2
     #define PIN_DELAY_Mode        GPIO_MODE_INPUT
+#endif
 
     #define PIN_TERM_GPIO_Port    GPIOB
     #define PIN_TERM_Pin          GPIO_PIN_3
@@ -234,4 +236,21 @@ THE SOFTWARE.
     #define PIN_TERM_Active_High 1
 #else
 	#error please define BOARD
+#endif
+
+#if defined(STM32F0)
+# define USB_INTERFACE   USB
+# define USB_INTERRUPT   USB_IRQn
+# define CAN_INTERFACE   CAN
+# define CAN_CLOCK_SPEED 48000000
+#elif defined(STM32F4)
+# define USB_INTERFACE   USB_OTG_FS
+# define USB_INTERRUPT   OTG_FS_IRQn
+# define CAN_INTERFACE   CAN1
+# define CAN_CLOCK_SPEED 42000000
+
+// RX FIFO is defined in words, so divide bytes by 4
+// RX FIFO size chosen according to reference manual RM0368 which suggests
+// using (largest packet size / 4) + 1
+# define USB_RX_FIFO_SIZE ((256U / 4U) + 1U)
 #endif
