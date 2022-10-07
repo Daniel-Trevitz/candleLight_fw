@@ -178,7 +178,7 @@ int main(void)
 	return 0;
 }
 
-static char buf[1024];
+static char buf[512];
 static int bufUsed;
 int block = 0;
 
@@ -191,7 +191,7 @@ int _write(int file, char *data, int len)
 	if (block)
 		return -1;
 
-	if (bufUsed + len >= 1024)
+	if (bufUsed + len >= (int)sizeof(buf))
 		return -1;
 
 	memcpy(buf+bufUsed, data, len);

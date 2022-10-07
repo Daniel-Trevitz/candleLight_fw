@@ -74,11 +74,17 @@ SET(TINY_USB_F4
     libs/tinyusb/src/portable/st/synopsys/synopsys_common.h
 )
 
-add_library(tinyusb_f0 ${TINY_USB} ${TINY_USB_F0})
-target_compile_definitions(tinyusb_f0 PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F0)
-target_link_libraries(tinyusb_f0 PRIVATE STM32_HAL_STM32F072xB)
-target_include_directories(tinyusb_f0 PUBLIC libs/tinyusb/src include)
-target_compile_options(tinyusb_f0 PRIVATE ${CPUFLAGS_F0})
+add_library(tinyusb_f042x6 ${TINY_USB} ${TINY_USB_F0})
+target_compile_definitions(tinyusb_f042x6 PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F0)
+target_link_libraries(tinyusb_f042x6 PRIVATE STM32_HAL_STM32F042x6)
+target_include_directories(tinyusb_f042x6 PUBLIC libs/tinyusb/src include)
+target_compile_options(tinyusb_f042x6 PRIVATE ${CPUFLAGS_F0})
+
+add_library(tinyusb_f072xB ${TINY_USB} ${TINY_USB_F0})
+target_compile_definitions(tinyusb_f072xB PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F0)
+target_link_libraries(tinyusb_f072xB PRIVATE STM32_HAL_STM32F072xB)
+target_include_directories(tinyusb_f072xB PUBLIC libs/tinyusb/src include)
+target_compile_options(tinyusb_f072xB PRIVATE ${CPUFLAGS_F0})
 
 add_library(tinyusb_f4 ${TINY_USB} ${TINY_USB_F4})
 target_compile_definitions(tinyusb_f4 PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F4)
@@ -93,32 +99,32 @@ target_compile_options(tinyusb_f4 PRIVATE ${CPUFLAGS_F4})
 
 add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/version.h"
 	COMMAND ${CMAKE_COMMAND}
-		-D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
-		-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.cmake
+	-D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.cmake
 )
 
 set(
     SOURCE_FILES
-        include/config.h
-        include/tusb_config.h src/usb_descriptors.c
+    include/config.h
+    include/tusb_config.h src/usb_descriptors.c
 
-        include/gs_usb.h src/gs_usb.c
+    include/gs_usb.h src/gs_usb.c
 
-        include/can.h src/can.c
-        include/dfu.h src/dfu.c
-        include/gpio.h src/gpio.c
-        include/led.h src/led.c
-        include/queue.h src/queue.c
-        include/timer.h src/timer.c
-        include/util.h src/util.c
+    include/can.h src/can.c
+    include/dfu.h src/dfu.c
+    include/gpio.h src/gpio.c
+    include/led.h src/led.c
+    include/queue.h src/queue.c
+    include/timer.h src/timer.c
+    include/util.h src/util.c
 
-        include/neo_pixel.h src/neo_pixel.c
+    include/neo_pixel.h src/neo_pixel.c
 
-        src/startup.c
-        src/main.c
-        src/interrupts.c
+    src/startup.c
+    src/main.c
+    src/interrupts.c
 
-        ${CMAKE_CURRENT_BINARY_DIR}/version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/version.h
 )
 
 
@@ -156,14 +162,14 @@ function(dfu_flash target)
 			COMMAND ${DFU_SUFFIX_EXECUTABLE} --add ${target}.dfu --vid 1d50 --pid 606f 1>/dev/null
 			COMMENT "create and sign dfu bin file: ${TGTNAME}_fw"
 		)
-		add_custom_target( flash-${target}
-			dfu-util -a 0 -R -s 0x08000000 -D ${target}.dfu
-		)
-	else()
-		add_custom_target( flash-${target}
-			dfu-util -d 1d50:606f -a 0 -R -s 0x08000000 -D ${target}.bin
-			)
-	endif()
+	add_custom_target( flash-${target}
+		dfu-util -a 0 -R -s 0x08000000 -D ${target}.dfu
+	)
+else()
+	add_custom_target( flash-${target}
+		dfu-util -d 1d50:606f -a 0 -R -s 0x08000000 -D ${target}.bin
+	)
+endif()
 endfunction()
 
 
@@ -174,50 +180,49 @@ function(add_f042_target TGTNAME)
 	add_executable(${TGTNAME}_fw ${SOURCE_FILES})
 	add_dependencies(${TGTNAME}_fw version_h)
 	target_include_directories(${TGTNAME}_fw PRIVATE libs/STM32_HAL/config/ include/ ${CMAKE_CURRENT_BINARY_DIR})
-    target_compile_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
-    target_compile_definitions(${TGTNAME}_fw PRIVATE BOARD_${TGTNAME} STM32F0)
-    target_link_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
+	target_compile_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
+	target_compile_definitions(${TGTNAME}_fw PRIVATE BOARD_${TGTNAME} STM32F0)
+	target_link_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
 	target_link_options(${TGTNAME}_fw PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/STM32F042X6.ld)
-	target_link_libraries(${TGTNAME}_fw PRIVATE STM32_HAL_STM32F042x6 tinyusb_f0)
-    make_bin_file(${TGTNAME}_fw)
-    dfu_flash(${TGTNAME}_fw)
-    show_object_size(${TGTNAME}_fw)
+	target_link_libraries(${TGTNAME}_fw PRIVATE STM32_HAL_STM32F042x6 tinyusb_f042x6)
+	make_bin_file(${TGTNAME}_fw)
+	dfu_flash(${TGTNAME}_fw)
+	show_object_size(${TGTNAME}_fw)
 endfunction()
 
 function(add_f072_target TGTNAME)
 	add_executable(${TGTNAME}_fw ${SOURCE_FILES})
 	add_dependencies(${TGTNAME}_fw version_h)
 	target_include_directories(${TGTNAME}_fw PRIVATE libs/STM32_HAL/config/ include/ ${CMAKE_CURRENT_BINARY_DIR})
-    target_compile_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
-    target_compile_definitions(${TGTNAME}_fw PRIVATE BOARD_${TGTNAME} STM32F0)
-    target_link_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
+	target_compile_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
+	target_compile_definitions(${TGTNAME}_fw PRIVATE BOARD_${TGTNAME} STM32F0)
+	target_link_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F0})
 	target_link_options(${TGTNAME}_fw PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/STM32F072XB.ld)
-	target_link_libraries(${TGTNAME}_fw PRIVATE STM32_HAL_STM32F072xB tinyusb_f0)
-    make_bin_file(${TGTNAME}_fw)
-    dfu_flash(${TGTNAME}_fw)
-    show_object_size(${TGTNAME}_fw)
+	target_link_libraries(${TGTNAME}_fw PRIVATE STM32_HAL_STM32F072xB tinyusb_f072xB)
+	make_bin_file(${TGTNAME}_fw)
+	dfu_flash(${TGTNAME}_fw)
+	show_object_size(${TGTNAME}_fw)
 endfunction()
 
 function(add_f407_target TGTNAME)
 	add_executable(${TGTNAME}_fw ${SOURCE_FILES})
 	add_dependencies(${TGTNAME}_fw version_h)
 	target_include_directories(${TGTNAME}_fw PRIVATE libs/STM32_HAL/config/ include/ ${CMAKE_CURRENT_BINARY_DIR})
-    target_compile_definitions(${TGTNAME}_fw PRIVATE BOARD_${TGTNAME} STM32F4)
-    target_compile_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F4})
-    target_link_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F4})
-    target_link_options(${TGTNAME}_fw PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/STM32F407XE.ld)
-    target_link_libraries(${TGTNAME}_fw PRIVATE STM32_HAL_STM32F407xE tinyusb_f4)
-    make_bin_file(${TGTNAME}_fw)
-    dfu_flash(${TGTNAME}_fw)
-    show_object_size(${TGTNAME}_fw)
+	target_compile_definitions(${TGTNAME}_fw PRIVATE BOARD_${TGTNAME} STM32F4)
+	target_compile_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F4})
+	target_link_options(${TGTNAME}_fw BEFORE PRIVATE ${CPUFLAGS_F4})
+	target_link_options(${TGTNAME}_fw PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/STM32F407XE.ld)
+	target_link_libraries(${TGTNAME}_fw PRIVATE STM32_HAL_STM32F407xE tinyusb_f4)
+	make_bin_file(${TGTNAME}_fw)
+	dfu_flash(${TGTNAME}_fw)
+	show_object_size(${TGTNAME}_fw)
 endfunction()
 
 ########## generate list of targets.
 # the "_fw" part is appended automatically
-#set(TGT042_LIST "cantact" "canalyze" "canable" "usb2can" "cannette")
-#set(TGT072_LIST "candleLight" "CANable_MKS")
+set(TGT042_LIST "cantact" "canalyze" "canable" "usb2can" "cannette")
+set(TGT072_LIST "candleLight" "CANable_MKS" "wmc_usb_can" "wmc_usb_can_standalone")
 set(TGT407_LIST "STM32F4_DevBoard")
-set(TGT072_LIST "wmc_usb_can" "wmc_usb_can_standalone")
 
 foreach (TGTNAME IN LISTS TGT042_LIST)
 	option(BUILD_${TGTNAME} "Build firmware for \"${TGTNAME}\" (default=yes)" ON)
