@@ -520,7 +520,7 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr)
         // Process control request
         if ( !process_control_request(event.rhport, &event.setup_received) )
         {
-		  TU_LOG(USBD_DBG, "  Stall EP0\r\n");
+          TU_LOG(USBD_DBG, "  Stall EP0\r\n");
           // Failed -> stall both control endpoint IN and OUT
           dcd_edpt_stall(event.rhport, 0);
           dcd_edpt_stall(event.rhport, 0 | TUSB_DIR_IN_MASK);
@@ -534,7 +534,7 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr)
         uint8_t const epnum   = tu_edpt_number(ep_addr);
         uint8_t const ep_dir  = tu_edpt_dir(ep_addr);
 
-		TU_LOG(USBD_DBG, "on EP %02X with %u bytes\r\n", ep_addr, (unsigned int) event.xfer_complete.len);
+        TU_LOG(USBD_DBG, "on EP %02X with %u bytes\r\n", ep_addr, (unsigned int) event.xfer_complete.len);
 
         _usbd_dev.ep_status[epnum][ep_dir].busy = false;
         _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
@@ -548,7 +548,7 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr)
           usbd_class_driver_t const * driver = get_driver( _usbd_dev.ep2drv[epnum][ep_dir] );
           TU_ASSERT(driver, );
 
-		  TU_LOG(USBD_DBG, "  %s xfer callback\r\n", driver->name);
+          TU_LOG(USBD_DBG, "  %s xfer callback\r\n", driver->name);
           driver->xfer_cb(event.rhport, ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
         }
       }
@@ -629,8 +629,8 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 #if CFG_TUSB_DEBUG >= 2
   if (TUSB_REQ_TYPE_STANDARD == p_request->bmRequestType_bit.type && p_request->bRequest <= TUSB_REQ_SYNCH_FRAME)
   {
-	TU_LOG(USBD_DBG, "  %s", tu_str_std_request[p_request->bRequest]);
-	if (TUSB_REQ_GET_DESCRIPTOR != p_request->bRequest) TU_LOG(USBD_DBG, "\r\n");
+    TU_LOG(USBD_DBG, "  %s", tu_str_std_request[p_request->bRequest]);
+    if (TUSB_REQ_GET_DESCRIPTOR != p_request->bRequest) TU_LOG(USBD_DBG, "\r\n");
   }
 #endif
 
@@ -652,7 +652,7 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 
       if ( TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type )
       {
-		// Non standard request is not supported
+        // Non standard request is not supported
         TU_BREAKPOINT();
         return false;
       }
@@ -744,7 +744,7 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
         break;
 
         // Unknown/Unsupported request
-		default: TU_BREAKPOINT(); return false;
+        default: TU_BREAKPOINT(); return false;
       }
     break;
 
@@ -968,7 +968,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const 
   {
     case TUSB_DESC_DEVICE:
     {
-	  TU_LOG(USBD_DBG, " Device\r\n");
+      TU_LOG(USBD_DBG, " Device\r\n");
 
       void* desc_device = (void*) (uintptr_t) tud_descriptor_device_cb();
 
@@ -992,7 +992,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const 
 
     case TUSB_DESC_BOS:
     {
-	  TU_LOG(USBD_DBG, " BOS\r\n");
+      TU_LOG(USBD_DBG, " BOS\r\n");
 
       // requested by host if USB > 2.0 ( i.e 2.1 or 3.x )
       if (!tud_descriptor_bos_cb) return false;
@@ -1014,12 +1014,12 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const 
 
       if ( desc_type == TUSB_DESC_CONFIGURATION )
       {
-		TU_LOG(USBD_DBG, " Configuration[%u]\r\n", desc_index);
+        TU_LOG(USBD_DBG, " Configuration[%u]\r\n", desc_index);
         desc_config = (uintptr_t) tud_descriptor_configuration_cb(desc_index);
       }else
       {
         // Host only request this after getting Device Qualifier descriptor
-		TU_LOG(USBD_DBG, " Other Speed Configuration\r\n");
+        TU_LOG(USBD_DBG, " Other Speed Configuration\r\n");
         TU_VERIFY( tud_descriptor_other_speed_configuration_cb );
         desc_config = (uintptr_t) tud_descriptor_other_speed_configuration_cb(desc_index);
       }
@@ -1035,7 +1035,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const 
 
     case TUSB_DESC_STRING:
     {
-	  TU_LOG(USBD_DBG, " String[%u]\r\n", desc_index);
+      TU_LOG(USBD_DBG, " String[%u]\r\n", desc_index);
 
       // String Descriptor always uses the desc set from user
       uint8_t const* desc_str = (uint8_t const*) tud_descriptor_string_cb(desc_index, tu_le16toh(p_request->wIndex));
@@ -1048,7 +1048,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const 
 
     case TUSB_DESC_DEVICE_QUALIFIER:
     {
-	  TU_LOG(USBD_DBG, " Device Qualifier\r\n");
+      TU_LOG(USBD_DBG, " Device Qualifier\r\n");
 
       TU_VERIFY( tud_descriptor_device_qualifier_cb );
 

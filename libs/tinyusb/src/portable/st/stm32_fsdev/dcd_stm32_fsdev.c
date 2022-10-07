@@ -110,9 +110,9 @@
 #endif
 
 #if CFG_TUD_ENABLED && \
-	  ( TU_CHECK_MCU(OPT_MCU_STM32F0, OPT_MCU_STM32F3, OPT_MCU_STM32L0, OPT_MCU_STM32L1, OPT_MCU_STM32G4, OPT_MCU_STM32WB) || \
-		(TU_CHECK_MCU(OPT_MCU_STM32F1) && defined(STM32F1_FSDEV)) \
-	  )
+      ( TU_CHECK_MCU(OPT_MCU_STM32F0, OPT_MCU_STM32F3, OPT_MCU_STM32L0, OPT_MCU_STM32L1, OPT_MCU_STM32G4, OPT_MCU_STM32WB) || \
+        (TU_CHECK_MCU(OPT_MCU_STM32F1) && defined(STM32F1_FSDEV)) \
+      )
 
 // In order to reduce the dependance on HAL, we undefine this.
 // Some definitions are copied to our private include file.
@@ -462,8 +462,6 @@ static void dcd_ep_ctr_tx_handler(uint32_t wIstr)
   uint32_t EPindex = wIstr & USB_ISTR_EP_ID;
   uint32_t wEPRegVal = pcd_get_endpoint(USB, EPindex);
 
-  if (EPindex != 0x03) printf("TX -- %i\n", (int)EPindex);
-
   // Verify the CTR_TX bit is set. This was in the ST Micro code,
   // but I'm not sure it's actually necessary?
   if((wEPRegVal & USB_EP_CTR_TX) == 0U)
@@ -496,8 +494,6 @@ static void dcd_ep_ctr_rx_handler(uint32_t wIstr)
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(EPindex,TUSB_DIR_OUT);
 
-  if (EPindex != 3) printf("RX -- %i\n", (int)EPindex);
-
   // Verify the CTR_RX bit is set. This was in the ST Micro code,
   // but I'm not sure it's actually necessary?
   if((wEPRegVal & USB_EP_CTR_RX) == 0U)
@@ -524,11 +520,11 @@ static void dcd_ep_ctr_rx_handler(uint32_t wIstr)
   {
     // Clear RX CTR interrupt flag
     if(EPindex != 0u)
-	{
-	  pcd_clear_rx_ep_ctr(USB, EPindex);
-	}
+    {
+      pcd_clear_rx_ep_ctr(USB, EPindex);
+    }
 
-	if (count != 0U)
+    if (count != 0U)
     {
 #if 0 // TODO support dcd_edpt_xfer_fifo API
       if (xfer->ff)
@@ -545,15 +541,15 @@ static void dcd_ep_ctr_rx_handler(uint32_t wIstr)
     }
 
     if ((count < xfer->max_packet_size) || (xfer->queued_len == xfer->total_len))
-	{
-	  /* RX COMPLETE */
+    {
+      /* RX COMPLETE */
       dcd_event_xfer_complete(0, EPindex, xfer->queued_len, XFER_RESULT_SUCCESS, true);
       // Though the host could still send, we don't know.
       // Does the bulk pipe need to be reset to valid to allow for a ZLP?
     }
     else
     {
-	  uint32_t remaining = (uint32_t)xfer->total_len - (uint32_t)xfer->queued_len;
+      uint32_t remaining = (uint32_t)xfer->total_len - (uint32_t)xfer->queued_len;
       if(remaining >= xfer->max_packet_size) {
         pcd_set_ep_rx_cnt(USB, EPindex,xfer->max_packet_size);
       } else {
@@ -906,7 +902,7 @@ bool dcd_edpt_xfer (uint8_t rhport, uint8_t ep_addr, uint8_t * buffer, uint16_t 
 
   if ( dir == TUSB_DIR_OUT )
   {
-	// A setup token can occur immediately after an OUT STATUS packet so make sure we have a valid
+    // A setup token can occur immediately after an OUT STATUS packet so make sure we have a valid
     // buffer for the control endpoint.
     if (epnum == 0 && buffer == NULL)
     {

@@ -207,7 +207,10 @@ uint16_t tu_desc_get_interface_total_len(tusb_desc_interface_t const* desc_itf, 
 /*------------------------------------------------------------------*/
 /* Debug
  *------------------------------------------------------------------*/
+#if CFG_TUSB_DEBUG
 #include <ctype.h>
+
+#if CFG_TUSB_DEBUG >= 2
 
 char const* const tu_str_speed[] = { "Full", "Low", "High" };
 char const* const tu_str_std_request[] =
@@ -226,9 +229,6 @@ char const* const tu_str_std_request[] =
   "Set Interface"     ,
   "Synch Frame"
 };
-
-#if CFG_TUSB_DEBUG
-#if CFG_TUSB_DEBUG >= 2
 
 #endif
 

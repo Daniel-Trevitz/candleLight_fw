@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <ctype.h>
 
 #include "config.h"
+#include "device/usbd_pvt.h"
 #include "neo_pixel.h"
 
 #include "gpio.h"

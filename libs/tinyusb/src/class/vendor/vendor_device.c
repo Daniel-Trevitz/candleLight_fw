@@ -125,7 +125,7 @@ static uint16_t maybe_transmit(vendord_interface_t* p_itf)
   uint16_t count = tu_fifo_read_n(&p_itf->tx_ff, p_itf->epin_buf, CFG_TUD_VENDOR_EPSIZE);
   if (count > 0)
   {
-	TU_ASSERT( usbd_edpt_xfer(rhport, p_itf->ep_in, p_itf->epin_buf, count) );
+    TU_ASSERT( usbd_edpt_xfer(rhport, p_itf->ep_in, p_itf->epin_buf, count) );
   }
   return count;
 }
@@ -225,7 +225,7 @@ uint16_t vendord_open(uint8_t rhport, tusb_desc_interface_t const * desc_itf, ui
     // Prepare for incoming data
     if ( p_vendor->ep_out )
     {
-	  TU_ASSERT(usbd_edpt_xfer(rhport, p_vendor->ep_out, p_vendor->epout_buf, sizeof(p_vendor->epout_buf)), 0);
+      TU_ASSERT(usbd_edpt_xfer(rhport, p_vendor->ep_out, p_vendor->epout_buf, sizeof(p_vendor->epout_buf)), 0);
     }
 
     if ( p_vendor->ep_in ) maybe_transmit(p_vendor);

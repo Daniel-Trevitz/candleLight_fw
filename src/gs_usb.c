@@ -1,15 +1,13 @@
 #include "gs_usb.h"
 
-#include "hal_include.h"
-#include "config.h"
-#include "led.h"
 #include "can.h"
+#include "config.h"
+#include "flash.h"
 #include "gpio.h"
+#include "led.h"
 #include "queue.h"
 #include "timer.h"
-#include "flash.h"
 
-#include "tusb_config.h"
 #include "device/usbd.h"
 #include "class/vendor/vendor_device.h"
 
@@ -70,14 +68,6 @@ static const struct gs_device_bt_const USBD_GS_CAN_btconst = {
 	1,    // brp increment;
 };
 
-/*
-Req: 0, Len: 4  -> GS_USB_BREQ_HOST_FORMAT
-Req: 5, Len: 12 -> GS_USB_BREQ_DEVICE_CONFIG
-Req: 4, Len: 40 -> GS_USB_BREQ_BT_CONST
-Req: 1, Len: 20 -> GS_USB_BREQ_BITTIMING
-Req: 2, Len: 8  -> GS_USB_BREQ_MODE
-*/
-
 static int gs_usb_ctrl_request_size(tusb_control_request_t const * req)
 {
 	switch ((enum gs_usb_breq)req->bRequest) {
@@ -113,8 +103,6 @@ static int gs_usb_ctrl_request_size(tusb_control_request_t const * req)
 
 static bool gs_usb_ctrl_setup(uint8_t rhport, tusb_control_request_t const * req)
 {
-	printf("Req: %i, Len: %i\n", req->bRequest, req->wLength);
-
 	if (gs_usb_ctrl_request_size(req) != req->wLength)
 	{
 		printf("Invalid request length: %i, %i\n", gs_usb_ctrl_request_size(req), req->wLength);
@@ -270,8 +258,6 @@ static bool gs_usb_ctrl_data(uint8_t rhport, tusb_control_request_t const * req)
 		break;
 	}
 
-//	req->bRequest = 0xFF;
-//	return USBD_OK;
 	return true;
 }
 
@@ -306,9 +292,6 @@ static void try_reading_from_host(void)
 
 	bool flush = false;
 
-	int s = tud_vendor_n_available(VENDOR_ITF);
-	if(s) printf("Read: %i, %lu, %i\n", s, size, timestamps_enabled);
-
 	while(tud_vendor_n_available(VENDOR_ITF) >= size)
 	{
 		struct gs_host_frame *frame = queue_pop_front(q_frame_pool);
@@ -318,11 +301,8 @@ static void try_reading_from_host(void)
 		if (size != tud_vendor_n_read(VENDOR_ITF, frame, size))
 		{
 			queue_push_back(q_frame_pool, frame); // frame unused, return
-			printf("couldn't read!!!\n");
 			return; // odd...
 		}
-
-		printf("Reading: %lx\n", frame->can_id);
 
 		queue_push_back(q_from_host, frame);
 		flush = true;
@@ -331,7 +311,6 @@ static void try_reading_from_host(void)
 	if (flush)
 	{
 		tud_vendor_n_read_flush(VENDOR_ITF);
-		printf("Flushed\n");
 	}
 }
 
@@ -363,10 +342,6 @@ static bool send_to_host(struct gs_host_frame *frame)
 	uint32_t result = tud_vendor_n_write(VENDOR_ITF, send_addr, len);
 	tud_vendor_n_flush(VENDOR_ITF);
 
-	// bool was_irq_enabled = disable_irq();
-	// uint8_t result = USBD_GS_CAN_Transmit(pdev, send_addr, len);
-	// restore_irq(was_irq_enabled);
-
 	return result == len;
 }
 
@@ -377,10 +352,8 @@ static void try_sending_to_host(void)
 		return;
 
 	if (send_to_host(frame)) {
-		printf("To Host Good: %lx, %lx\n", frame->can_id, frame->echo_id);
 		queue_push_back(q_frame_pool, frame);
 	} else {
-		printf("To Host Bad: %lx\n", frame->can_id);
 		queue_push_front(q_to_host, frame);
 	}
 }
@@ -397,8 +370,6 @@ static void queue_new_rx_can_msg(void)
 		return; // no frames to use
 
 	if (can_receive(&hCAN, frame)) {
-		printf("Frame Read\n");
-
 		frame->timestamp_us = timer_get();
 		frame->echo_id = 0xFFFFFFFF; // not an echo frame
 		frame->channel = 0;
@@ -446,7 +417,6 @@ static void send_queued_tx_can_msg(void)
 
 	// send can message from host
 	if (can_send(&hCAN, frame)) {
-		printf("Frame Echoed\n");
 		// Echo sent frame back to host
 		frame->flags = 0x0;
 		frame->reserved = 0x0;
