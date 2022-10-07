@@ -25,8 +25,8 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <stdint.h>
-#include <stm32f0xx_hal_def.h>
+
+#include "hal_include.h"
 
 #define u32 uint32_t
 #define u8 uint8_t

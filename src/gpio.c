@@ -36,12 +36,17 @@ void gpio_init(void)
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOF_CLK_ENABLE();
+	__HAL_RCC_GPIOF_CLK_ENABLE();
 
 #if defined(STM32F4)
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 #endif
+
+#if defined(USB)
 	__HAL_RCC_USB_CLK_ENABLE();
+#elif defined(USB_OTG_FS)
+	__HAL_RCC_USB_OTG_FS_CLK_ENABLE();
+#endif
 
 #ifdef CAN_S_Pin
 	HAL_GPIO_WritePin(CAN_S_GPIO_Port, CAN_S_Pin, GPIO_PIN_SET);

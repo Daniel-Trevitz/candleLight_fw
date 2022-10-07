@@ -54,12 +54,6 @@ SET(TINY_USB
     libs/tinyusb/src/device/usbd.c
     libs/tinyusb/src/device/usbd.h
 
-    libs/tinyusb/src/portable/st/stm32_fsdev/dcd_stm32_fsdev_pvt_st.h
-    libs/tinyusb/src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c
-
-#    libs/tinyusb/src/portable/st/synopsys/dcd_synopsys.c
-#    libs/tinyusb/src/portable/st/synopsys/synopsys_common.h
-
     libs/tinyusb/src/class/cdc/cdc_device.c
     libs/tinyusb/src/class/cdc/cdc_device.h
     libs/tinyusb/src/class/cdc/cdc_host.c
@@ -70,16 +64,27 @@ SET(TINY_USB
     libs/tinyusb/src/class/vendor/vendor_device.h
 )
 
-add_library(tinyusb_f0 ${TINY_USB})
+SET(TINY_USB_F0
+    libs/tinyusb/src/portable/st/stm32_fsdev/dcd_stm32_fsdev_pvt_st.h
+    libs/tinyusb/src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c
+)
+
+SET(TINY_USB_F4
+    libs/tinyusb/src/portable/st/synopsys/dcd_synopsys.c
+    libs/tinyusb/src/portable/st/synopsys/synopsys_common.h
+)
+
+add_library(tinyusb_f0 ${TINY_USB} ${TINY_USB_F0})
 target_compile_definitions(tinyusb_f0 PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F0)
 target_link_libraries(tinyusb_f0 PRIVATE STM32_HAL_STM32F072xB)
 target_include_directories(tinyusb_f0 PUBLIC libs/tinyusb/src include)
 target_compile_options(tinyusb_f0 PRIVATE ${CPUFLAGS_F0})
 
-#add_library(tinyusb_f4 ${TINY_USB})
-#target_compile_definitions(tinyusb_f4 PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F4)
-#target_include_directories(tinyusb_f4 PUBLIC libs/tinyusb/src include)
-#target_compile_options(tinyusb_f4 PRIVATE ${CPUFLAGS_F4})
+add_library(tinyusb_f4 ${TINY_USB} ${TINY_USB_F4})
+target_compile_definitions(tinyusb_f4 PUBLIC CFG_TUSB_MCU=OPT_MCU_STM32F4)
+target_link_libraries(tinyusb_f4 PRIVATE STM32_HAL_STM32F407xE)
+target_include_directories(tinyusb_f4 PUBLIC libs/tinyusb/src include)
+target_compile_options(tinyusb_f4 PRIVATE ${CPUFLAGS_F4})
 
 # Add a custom target that produces version.h, plus
 # a dummy output that's not actually produced, in order
@@ -212,7 +217,7 @@ endfunction()
 # the "_fw" part is appended automatically
 #set(TGT042_LIST "cantact" "canalyze" "canable" "usb2can" "cannette")
 #set(TGT072_LIST "candleLight" "CANable_MKS")
-#set(TGT407_LIST "STM32F4_DevBoard")
+set(TGT407_LIST "STM32F4_DevBoard")
 set(TGT072_LIST "wmc_usb_can" "wmc_usb_can_standalone")
 
 foreach (TGTNAME IN LISTS TGT042_LIST)
