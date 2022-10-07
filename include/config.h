@@ -43,13 +43,13 @@ THE SOFTWARE.
 #define USBD_VID                     0x1d50
 #define USBD_PID_FS                  0x606f
 #define USBD_LANGID_STRING           1033
-#define USBD_CONFIGURATION_STRING_FS (uint8_t*) GIT_HASH
-#define USBD_INTERFACE_STRING_FS     (uint8_t*) "gs_usb interface"
+#define USBD_CONFIGURATION_STRING_FS GIT_HASH
+#define USBD_INTERFACE_STRING_FS     "gs_usb interface"
 
 #if defined(BOARD_candleLight)
-	#define USBD_PRODUCT_STRING_FS		(uint8_t*) "candleLight USB to CAN adapter"
-	#define USBD_MANUFACTURER_STRING	(uint8_t*) "bytewerk"
-	#define DFU_INTERFACE_STRING_FS		(uint8_t*) "candleLight firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS		"candleLight USB to CAN adapter"
+	#define USBD_MANUFACTURER_STRING	"bytewerk"
+	#define DFU_INTERFACE_STRING_FS		"candleLight firmware upgrade interface"
 	#define CAN_S_Pin GPIO_PIN_13
 	#define CAN_S_GPIO_Port GPIOC
 
@@ -64,9 +64,9 @@ THE SOFTWARE.
 	#define LEDTX_Active_High 0
 
 #elif defined(BOARD_CANable_MKS)
-	#define USBD_PRODUCT_STRING_FS		(uint8_t*) "CANable-MKS gs_usb"
-	#define USBD_MANUFACTURER_STRING	(uint8_t*) "makerbase"
-	#define DFU_INTERFACE_STRING_FS		(uint8_t*) "CANable-MKS firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS		"CANable-MKS gs_usb"
+	#define USBD_MANUFACTURER_STRING	"makerbase"
+	#define DFU_INTERFACE_STRING_FS		"CANable-MKS firmware upgrade interface"
 
 	// SILENT pin not connected
 
@@ -81,9 +81,9 @@ THE SOFTWARE.
 	#define LEDTX_Active_High 0
 
 #elif defined(BOARD_cantact)
-	#define USBD_PRODUCT_STRING_FS		(uint8_t*) "cantact gs_usb"
-	#define USBD_MANUFACTURER_STRING	(uint8_t*) "cantact.io"
-	#define DFU_INTERFACE_STRING_FS		(uint8_t*) "cantact firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS		"cantact gs_usb"
+	#define USBD_MANUFACTURER_STRING	"cantact.io"
+	#define DFU_INTERFACE_STRING_FS		"cantact firmware upgrade interface"
 
 	// SILENT pin not connected
 
@@ -98,9 +98,9 @@ THE SOFTWARE.
 	#define LEDTX_Active_High 1
 
 #elif defined(BOARD_canable)
-	#define USBD_PRODUCT_STRING_FS			(uint8_t*) "canable gs_usb"
-	#define USBD_MANUFACTURER_STRING		(uint8_t*) "canable.io"
-	#define DFU_INTERFACE_STRING_FS			(uint8_t*) "canable firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS			"canable gs_usb"
+	#define USBD_MANUFACTURER_STRING		"canable.io"
+	#define DFU_INTERFACE_STRING_FS			"canable firmware upgrade interface"
 
 	// SILENT pin not connected
 
@@ -115,9 +115,9 @@ THE SOFTWARE.
 	#define LEDTX_Active_High 0
 
 #elif defined(BOARD_usb2can)
-	#define USBD_PRODUCT_STRING_FS		(uint8_t*) "USB2CAN RCA gs_usb"
-	#define USBD_MANUFACTURER_STRING	(uint8_t*) "Roboter Club Aachen"
-	#define DFU_INTERFACE_STRING_FS		(uint8_t*) "usb2can firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS		"USB2CAN RCA gs_usb"
+	#define USBD_MANUFACTURER_STRING	"Roboter Club Aachen"
+	#define DFU_INTERFACE_STRING_FS		"usb2can firmware upgrade interface"
 
 	// SILENT pin not connected
 
@@ -142,9 +142,9 @@ THE SOFTWARE.
 	#define LEDRX_Active_High 0
 
 #elif defined(BOARD_canalyze)
-	#define USBD_PRODUCT_STRING_FS		(uint8_t*) "CANAlyze gs_usb"
-	#define USBD_MANUFACTURER_STRING	(uint8_t*) "STMicroelectronics"
-	#define DFU_INTERFACE_STRING_FS		(uint8_t*) "CANAlyze firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS		"CANAlyze gs_usb"
+	#define USBD_MANUFACTURER_STRING	"STMicroelectronics"
+	#define DFU_INTERFACE_STRING_FS		"CANAlyze firmware upgrade interface"
 
 	// SILENT pin not connected
 
@@ -159,9 +159,9 @@ THE SOFTWARE.
 	#define LEDTX_Active_High 1
 
 #elif defined(BOARD_cannette)
-	#define USBD_PRODUCT_STRING_FS			(uint8_t*) "cannette gs_usb"
-	#define USBD_MANUFACTURER_STRING		(uint8_t*) "chacaltech"
-	#define DFU_INTERFACE_STRING_FS			(uint8_t*) "cannette firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS			"cannette gs_usb"
+	#define USBD_MANUFACTURER_STRING		"chacaltech"
+	#define DFU_INTERFACE_STRING_FS			"cannette firmware upgrade interface"
 
 	// SILENT pin not connected
 
@@ -185,9 +185,9 @@ THE SOFTWARE.
 	#define DCDCEN_Pin GPIO_PIN_15		/* activate DCDC converter, active high */
 
 #elif defined(BOARD_STM32F4_DevBoard)
-	#define USBD_PRODUCT_STRING_FS	 (uint8_t*) "STM32F4VE Dev Board"
-	#define USBD_MANUFACTURER_STRING (uint8_t*) "misc"
-	#define DFU_INTERFACE_STRING_FS  (uint8_t*) "STM32F4VE firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS	 "STM32F4VE Dev Board"
+	#define USBD_MANUFACTURER_STRING "misc"
+	#define DFU_INTERFACE_STRING_FS  "STM32F4VE firmware upgrade interface"
 
 	#define CAN_S_Pin		 GPIO_PIN_10
 	#define CAN_S_GPIO_Port  GPIOA
@@ -207,9 +207,9 @@ THE SOFTWARE.
 	#define USB_Pin_DP		 GPIO_PIN_12
 
 #elif defined(BOARD_wmc_usb_can) || defined(BOARD_wmc_usb_can_standalone)
-    #define USBD_PRODUCT_STRING_FS	 (uint8_t*) "Dan's USB CAN Board"
-    #define USBD_MANUFACTURER_STRING (uint8_t*) "WMC"
-    #define DFU_INTERFACE_STRING_FS  (uint8_t*) "USB CAN firmware upgrade interface"
+	#define USBD_PRODUCT_STRING_FS	 "Dan's USB CAN Board"
+	#define USBD_MANUFACTURER_STRING "WMC"
+	#define DFU_INTERFACE_STRING_FS  "USB CAN firmware upgrade interface"
 
     // Controls the RGB neopixel
 	#define NEO_LED_GPIO_Port     GPIOB
@@ -237,6 +237,8 @@ THE SOFTWARE.
 #else
 	#error please define BOARD
 #endif
+
+#define NUM_CAN_CHANNEL  1
 
 #if defined(STM32F0)
 # define USB_INTERFACE   USB

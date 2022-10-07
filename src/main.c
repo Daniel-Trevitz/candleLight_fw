@@ -45,11 +45,9 @@ THE SOFTWARE.
 #include "tusb_config.h"
 #include "device/usbd.h"
 
-void gs_usb_task(void);
 void HAL_MspInit(void);
 static void SystemClock_Config(void);
-//static bool send_to_host_or_enqueue(struct gs_host_frame *frame);
-//static void send_to_host(void);
+
 static int run = 1;
 
 can_data_t hCAN = {0};

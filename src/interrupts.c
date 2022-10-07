@@ -61,8 +61,6 @@ void TIM3_IRQHandler(void)
 
 void USB_Handler(void)
 {
-//    extern PCD_HandleTypeDef hpcd_USB_FS;
-//	HAL_PCD_IRQHandler(&hpcd_USB_FS);
 	tud_int_handler(0);
 }
 
