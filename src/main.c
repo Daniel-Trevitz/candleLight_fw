@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <ctype.h>
 
 #include "config.h"
-#include "device/usbd_pvt.h"
 #include "neo_pixel.h"
 
 #include "gpio.h"
@@ -40,7 +39,6 @@ THE SOFTWARE.
 #include "led.h"
 #include "dfu.h"
 #include "timer.h"
-#include "flash.h"
 #include "util.h"
 
 #include "class/cdc/cdc_device.h"
@@ -112,8 +110,6 @@ int main(void)
 {
 	HAL_Init();
 	SystemClock_Config();
-
-	flash_load();
 
 	gpio_init();
 

@@ -2,7 +2,6 @@
 
 #include "can.h"
 #include "config.h"
-#include "flash.h"
 #include "gpio.h"
 #include "led.h"
 #include "queue.h"
@@ -76,7 +75,6 @@ static int gs_usb_ctrl_request_size(tusb_control_request_t const * req)
 	case GS_USB_BREQ_IDENTIFY:
 	case GS_USB_BREQ_GET_TERMINATION:
 	case GS_USB_BREQ_SET_TERMINATION:
-	case GS_USB_BREQ_SET_USER_ID:
 		return sizeof(uint32_t);
 
 	case GS_USB_BREQ_MODE:
@@ -95,6 +93,7 @@ static int gs_usb_ctrl_request_size(tusb_control_request_t const * req)
 	case GS_USB_BREQ_BERR:
 	case GS_USB_BREQ_TIMESTAMP:
 	case GS_USB_BREQ_GET_USER_ID:
+	case GS_USB_BREQ_SET_USER_ID:
 		break;
 	}
 
@@ -115,7 +114,6 @@ static bool gs_usb_ctrl_setup(uint8_t rhport, tusb_control_request_t const * req
 	case GS_USB_BREQ_MODE:
 	case GS_USB_BREQ_BITTIMING:
 	case GS_USB_BREQ_IDENTIFY:
-	case GS_USB_BREQ_SET_USER_ID:
 	case GS_USB_BREQ_SET_TERMINATION:
 		// get data
 		break;
@@ -145,14 +143,8 @@ static bool gs_usb_ctrl_setup(uint8_t rhport, tusb_control_request_t const * req
 		memcpy(buffer, &sof_timestamp_us, sizeof(sof_timestamp_us));
 		break;
 
-	case GS_USB_BREQ_GET_USER_ID:
-		if (req->wValue >= NUM_CAN_CHANNEL)
-			return false; // don't be so cruel
-
-		uint32_t d32 = flash_get_user_id(req->wValue);
-		memcpy(buffer, &d32, sizeof(d32));
-		break;
-
+	case GS_USB_BREQ_GET_USER_ID: // disabled
+	case GS_USB_BREQ_SET_USER_ID: // disabled
 	default:
 		return false; // unknown
 	}
@@ -193,12 +185,7 @@ static bool gs_usb_ctrl_data(uint8_t rhport, tusb_control_request_t const * req)
 		return true;
 
 	case GS_USB_BREQ_SET_USER_ID:
-		memcpy(&param_u32, buffer, sizeof(param_u32));
-		if (flash_set_user_id(req->wValue, param_u32)) {
-			flash_flush();
-			return true;
-		}
-		break;
+		return false;
 
 	case GS_USB_BREQ_MODE:
 		if (req->wValue < NUM_CAN_CHANNEL) {
