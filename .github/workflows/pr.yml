@@ -1,0 +1,14 @@
+on: [ pull_request ]
+
+jobs:
+  cpp_style_check:
+    runs-on: ubuntu-latest
+    name: Check C++ Styles
+    steps:
+    - name: Checkout this commit
+      uses: actions/checkout@v3
+    - name: uncrustify-check
+      uses: Daniel-Trevitz/uncrustify-check@v0.2.0
+      with:
+        configFile: 'uncrustify.cfg'
+
