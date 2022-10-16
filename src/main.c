@@ -62,7 +62,7 @@ int main(void)
 {
 	uint32_t last_can_error_status = 0;
 
-	HAL_Init();
+	    HAL_Init    ();
 	SystemClock_Config();
 
 	flash_load();
